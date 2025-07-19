@@ -79,7 +79,7 @@ dev_dependencies:
 ### Installation
 ```bash
 # Clone the repository
-git clone <your-repo-url>
+git clone https://github.com/niharika06oct/gymAndVo2Max.git
 cd fit_strength_vo2
 
 # Install dependencies
