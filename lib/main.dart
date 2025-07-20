@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 import 'providers/theme_provider.dart';
 import 'screens/home.dart';
@@ -9,8 +10,28 @@ import 'screens/workout_logger.dart';
 import 'screens/insights.dart';
 import 'screens/settings.dart';
 import 'screens/onboarding.dart';
+import 'models/vo2.dart';
+import 'models/Exercise.dart';
+import 'models/WorkoutSet.dart';
+import 'models/WorkoutSession.dart';
+import 'models/Interval.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialise Hive once at startup
+  await Hive.initFlutter();
+  Hive
+    ..registerAdapter(Vo2RecordAdapter())
+    ..registerAdapter(ExerciseAdapter())
+    ..registerAdapter(WorkoutSetAdapter())
+    ..registerAdapter(WorkoutSessionAdapter())
+    ..registerAdapter(IntervalAdapter());
+
+  // Open boxes synchronously so the app can read immediately
+  await Hive.openBox<Vo2Record>('vo2');
+  await Hive.openBox<WorkoutSession>('workout_sessions');
+
   runApp(const ProviderScope(child: MyApp()));
 }
 

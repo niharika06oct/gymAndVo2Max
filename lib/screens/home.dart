@@ -4,6 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 import '../providers/boxes.dart';
 import '../models/vo2.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../data/exercises.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -49,7 +50,7 @@ class HomeScreen extends ConsumerWidget {
             const SizedBox(height: 16),
             
             // Muscle Coverage Radar
-            _buildMuscleRadarCard(context),
+            _buildMuscleRadarCard(context, ref),
             const SizedBox(height: 16),
             
             // Quick Actions
@@ -67,65 +68,92 @@ class HomeScreen extends ConsumerWidget {
   }
 
   Widget _buildVo2PercentileCard(BuildContext context, WidgetRef ref) {
-    return Card(
-      color: const Color(0xFF1C1D22),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            const Text(
-              'VO₂ Max',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+    final asyncRecords = ref.watch(vo2RecordsProvider);
+
+    return asyncRecords.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Card(
+        color: const Color(0xFF1C1D22),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text('Error: $e'),
+        ),
+      ),
+      data: (records) {
+        if (records.isEmpty) {
+          return Card(
+            color: const Color(0xFF1C1D22),
+            child: const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text('No VO₂ records yet – try the Cooper test!'),
             ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 120,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  SizedBox(
-                    height: 120,
-                    width: 120,
-                    child: CircularProgressIndicator(
-                      value: 0.68, // 68th percentile
-                      strokeWidth: 8,
-                      backgroundColor: Colors.grey[300],
-                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
-                    ),
-                  ),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+          );
+        }
+
+        final latest = records.last.vo2;
+        // Simple mapping for demo – you’d use your helper functions
+        final pct = (latest / 60).clamp(0.0, 1.0); // crude scale
+        final level = latest >= 57
+            ? 'Superior'
+            : latest >= 54
+                ? 'Excellent'
+                : latest >= 45
+                    ? 'Good'
+                    : latest >= 34
+                        ? 'Fair'
+                        : 'Poor';
+
+        return Card(
+          color: const Color(0xFF1C1D22),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                const Text('VO₂ Max',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 16),
+                SizedBox(
+                  height: 120,
+                  child: Stack(
+                    alignment: Alignment.center,
                     children: [
-                      ShaderMask(
-                        shaderCallback: (bounds) => const LinearGradient(
-                          colors: [Color(0xFF6C63FF), Color(0xFF42A5F5)],
-                        ).createShader(Rect.fromLTWH(0, 0, bounds.width, bounds.height)),
-                        child: const Text(
-                          '68%',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
+                      SizedBox(
+                        height: 120,
+                        width: 120,
+                        child: CircularProgressIndicator(
+                          value: pct,
+                          strokeWidth: 8,
+                          backgroundColor: Colors.grey[800],
+                          valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
                         ),
                       ),
-                      const Text(
-                        'Good',
-                        style: TextStyle(fontSize: 12),
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          ShaderMask(
+                            shaderCallback: (bounds) => const LinearGradient(
+                              colors: [Color(0xFF6C63FF), Color(0xFF42A5F5)],
+                            ).createShader(Rect.fromLTWH(0, 0, bounds.width, bounds.height)),
+                            child: Text('${(pct * 100).round()}%',
+                                style: const TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white)),
+                          ),
+                          Text(level, style: const TextStyle(fontSize: 12)),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 8),
+                Text('Latest VO₂: ${latest.toStringAsFixed(1)} ml·kg⁻¹·min⁻¹',
+                    style: const TextStyle(fontSize: 14)),
+              ],
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'You\'re at 68th percentile for your age',
-              style: TextStyle(fontSize: 14),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -186,74 +214,93 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildMuscleRadarCard(BuildContext context) {
-    return Card(
-      color: const Color(0xFF1C1D22),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Muscle Coverage',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 200,
-              child: RadarChart(
-                RadarChartData(
-                  dataSets: [
-                    RadarDataSet(
-                      dataEntries: [
-                        const RadarEntry(value: 85),
-                        const RadarEntry(value: 90),
-                        const RadarEntry(value: 75),
-                        const RadarEntry(value: 60),
-                        const RadarEntry(value: 80),
-                        const RadarEntry(value: 70),
-                      ],
-                      fillColor: Colors.blue.withOpacity(0.3),
-                      borderColor: Colors.blue,
-                      borderWidth: 2,
-                    ),
-                  ],
-                  titleTextStyle: const TextStyle(fontSize: 12),
-                  tickCount: 5,
-                  ticksTextStyle: const TextStyle(fontSize: 10),
-                  getTitle: (index, angle) {
-                    const titles = ['Chest', 'Back', 'Legs', 'Shoulders', 'Arms', 'Core'];
-                    return RadarChartTitle(
-                      text: titles[index],
-                      angle: angle,
-                    );
-                  },
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.orange[100],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.warning, color: Colors.orange, size: 16),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Shoulders need attention - below 80% of average',
-                      style: TextStyle(fontSize: 12, color: Colors.orange),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+  Widget _buildMuscleRadarCard(BuildContext context, WidgetRef ref) {
+    final asyncSessions = ref.watch(workoutSessionsProvider);
+
+    return asyncSessions.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Card(
+        color: const Color(0xFF1C1D22),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text('Error: $e'),
         ),
       ),
+      data: (sessions) {
+        if (sessions.isEmpty) {
+          return Card(
+            color: const Color(0xFF1C1D22),
+            child: const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text('No workouts yet – log your first session!'),
+            ),
+          );
+        }
+
+        // Aggregate muscle volumes from the latest session
+        final latest = sessions.last;
+        final Map<String, double> muscleVolume = {
+          'Chest': 0,
+          'Back': 0,
+          'Legs': 0,
+          'Shoulders': 0,
+          'Arms': 0,
+          'Core': 0,
+        };
+
+        for (final set in latest.sets) {
+          final ex = kExerciseCatalog.firstWhere((e) => e.id == set.exerciseId, orElse: () => kExerciseCatalog.first);
+          for (final m in ex.primaryMuscles) {
+            muscleVolume[m] = (muscleVolume[m] ?? 0) + 1; // simple count per set
+          }
+        }
+
+        final values = [
+          muscleVolume['Chest']!,
+          muscleVolume['Back']!,
+          muscleVolume['Legs']!,
+          muscleVolume['Shoulders']!,
+          muscleVolume['Arms']!,
+          muscleVolume['Core']!,
+        ];
+
+        return Card(
+          color: const Color(0xFF1C1D22),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Muscle Coverage',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 16),
+                SizedBox(
+                  height: 200,
+                  child: RadarChart(
+                    RadarChartData(
+                      dataSets: [
+                        RadarDataSet(
+                          dataEntries: values.map((v) => RadarEntry(value: v)).toList(),
+                          fillColor: Colors.blue.withOpacity(0.3),
+                          borderColor: Colors.blue,
+                          borderWidth: 2,
+                        ),
+                      ],
+                      titleTextStyle: const TextStyle(fontSize: 12),
+                      tickCount: 5,
+                      ticksTextStyle: const TextStyle(fontSize: 10),
+                      getTitle: (index, angle) {
+                        const titles = ['Chest', 'Back', 'Legs', 'Shoulders', 'Arms', 'Core'];
+                        return RadarChartTitle(text: titles[index], angle: angle);
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

@@ -84,7 +84,7 @@ class _Vo2TestScreenState extends ConsumerState<Vo2TestScreen> {
   Future<void> _saveVo2Record() async {
     if (_calculatedVo2 == null) return;
 
-    final vo2Box = await ref.read(vo2BoxProvider.future);
+    final vo2Box = ref.read(vo2BoxProvider);
     final record = Vo2Record(
       date: DateTime.now(),
       vo2: _calculatedVo2!,

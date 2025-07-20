@@ -1,34 +1,44 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:rxdart/rxdart.dart';
 import '../models/vo2.dart';
 import '../models/Exercise.dart';
 import '../models/WorkoutSession.dart';
 import '../models/WorkoutSet.dart';
 import '../models/Interval.dart';
 
-final vo2BoxProvider = FutureProvider<Box<Vo2Record>>((ref) async {
-  await Hive.initFlutter();               // runs once
-  Hive.registerAdapter(Vo2RecordAdapter());// generated adapter
-  return await Hive.openBox<Vo2Record>('vo2');
+// Boxes are opened in main.dart; providers simply expose them.
+
+final vo2BoxProvider = Provider<Box<Vo2Record>>((ref) {
+  return Hive.box<Vo2Record>('vo2');
 });
 
-final exerciseBoxProvider = FutureProvider<Box<Exercise>>((ref) async {
-  Hive.registerAdapter(ExerciseAdapter());
-  return await Hive.openBox<Exercise>('exercises');
+// Reactive list of records
+final vo2RecordsProvider = StreamProvider<List<Vo2Record>>((ref) {
+  final box = ref.watch(vo2BoxProvider);
+  // Emit current list first then updates
+  return box.watch().map((_) => box.values.cast<Vo2Record>().toList())
+    .startWith(box.values.cast<Vo2Record>().toList());
 });
 
-final workoutSessionBoxProvider = FutureProvider<Box<WorkoutSession>>((ref) async {
-  Hive.registerAdapter(WorkoutSetAdapter());
-  Hive.registerAdapter(WorkoutSessionAdapter());
-  return await Hive.openBox<WorkoutSession>('workout_sessions');
+final exerciseBoxProvider = Provider<Box<Exercise>>((ref) {
+  return Hive.box<Exercise>('exercises');
 });
 
-final workoutSetBoxProvider = FutureProvider<Box<WorkoutSet>>((ref) async {
-  Hive.registerAdapter(WorkoutSetAdapter());
-  return await Hive.openBox<WorkoutSet>('workout_sets');
+final workoutSessionBoxProvider = Provider<Box<WorkoutSession>>((ref) {
+  return Hive.box<WorkoutSession>('workout_sessions');
 });
 
-final intervalBoxProvider = FutureProvider<Box<Interval>>((ref) async {
-  Hive.registerAdapter(IntervalAdapter());
-  return await Hive.openBox<Interval>('intervals');
+final workoutSetBoxProvider = Provider<Box<WorkoutSet>>((ref) {
+  return Hive.box<WorkoutSet>('workout_sets');
+});
+
+final intervalBoxProvider = Provider<Box<Interval>>((ref) {
+  return Hive.box<Interval>('intervals');
+});
+
+final workoutSessionsProvider = StreamProvider<List<WorkoutSession>>((ref) {
+  final box = ref.watch(workoutSessionBoxProvider);
+  return box.watch().map((_) => box.values.cast<WorkoutSession>().toList())
+    .startWith(box.values.cast<WorkoutSession>().toList());
 });

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/Exercise.dart';
+import '../data/exercises.dart';
 import '../models/WorkoutSet.dart';
 import '../models/WorkoutSession.dart';
 import 'package:uuid/uuid.dart';
@@ -15,63 +16,14 @@ class WorkoutLoggerScreen extends ConsumerStatefulWidget {
 
 class _WorkoutLoggerScreenState extends ConsumerState<WorkoutLoggerScreen> {
   final List<WorkoutSet> _sets = [];
-  final List<Exercise> _availableExercises = [
-    Exercise(
-      id: 'bench_press',
-      name: 'Bench Press',
-      primaryMuscles: ['Chest', 'Triceps'],
-      secondaryMuscles: ['Shoulders'],
-      category: 'Strength',
-      defaultUnit: 'kg',
-    ),
-    Exercise(
-      id: 'squat',
-      name: 'Squat',
-      primaryMuscles: ['Quadriceps', 'Glutes'],
-      secondaryMuscles: ['Core', 'Hamstrings'],
-      category: 'Strength',
-      defaultUnit: 'kg',
-    ),
-    Exercise(
-      id: 'deadlift',
-      name: 'Deadlift',
-      primaryMuscles: ['Back', 'Hamstrings'],
-      secondaryMuscles: ['Glutes', 'Core'],
-      category: 'Strength',
-      defaultUnit: 'kg',
-    ),
-    Exercise(
-      id: 'pull_up',
-      name: 'Pull Up',
-      primaryMuscles: ['Back', 'Biceps'],
-      secondaryMuscles: ['Shoulders'],
-      category: 'Strength',
-      defaultUnit: 'reps',
-    ),
-    Exercise(
-      id: 'shoulder_press',
-      name: 'Shoulder Press',
-      primaryMuscles: ['Shoulders'],
-      secondaryMuscles: ['Triceps'],
-      category: 'Strength',
-      defaultUnit: 'kg',
-    ),
-    Exercise(
-      id: 'plank',
-      name: 'Plank',
-      primaryMuscles: ['Core'],
-      secondaryMuscles: ['Shoulders'],
-      category: 'Core',
-      defaultUnit: 'sec',
-    ),
-  ];
+  final List<Exercise> _availableExercises = kExerciseCatalog;
 
   @override
   void initState() {
     super.initState();
     // Load last saved session's sets (optional) to persist across navigation within the run.
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final box = await ref.read(workoutSessionBoxProvider.future);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final box = ref.read(workoutSessionBoxProvider);
       if (box.isNotEmpty) {
         final last = box.getAt(box.length - 1) as WorkoutSession;
         setState(() {
@@ -314,7 +266,7 @@ class _WorkoutLoggerScreenState extends ConsumerState<WorkoutLoggerScreen> {
     }
 
     () async {
-      final box = await ref.read(workoutSessionBoxProvider.future);
+      final box = ref.read(workoutSessionBoxProvider);
 
       final session = WorkoutSession(
         id: const Uuid().v4(),
