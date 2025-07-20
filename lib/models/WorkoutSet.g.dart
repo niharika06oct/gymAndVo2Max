@@ -19,25 +19,22 @@ class WorkoutSetAdapter extends TypeAdapter<WorkoutSet> {
     return WorkoutSet(
       exerciseId: fields[0] as String,
       setIndex: fields[1] as int,
-      reps: fields[2] as int,
-      load: fields[3] as double,
-      rpe: fields[4] as int,
+      loads: (fields[2] as List).cast<double>(),
+      rpe: fields[3] as int,
     );
   }
 
   @override
   void write(BinaryWriter writer, WorkoutSet obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(4)
       ..writeByte(0)
       ..write(obj.exerciseId)
       ..writeByte(1)
       ..write(obj.setIndex)
       ..writeByte(2)
-      ..write(obj.reps)
+      ..write(obj.loads)
       ..writeByte(3)
-      ..write(obj.load)
-      ..writeByte(4)
       ..write(obj.rpe);
   }
 

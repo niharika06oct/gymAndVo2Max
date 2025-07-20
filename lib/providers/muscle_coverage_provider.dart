@@ -59,7 +59,7 @@ final muscleCoverageProvider = StreamProvider<Map<String, double>>((ref) {
         if (exercise == null) continue;
         for (final muscle in exercise.primaryMuscles) {
           final category = _muscleToCategory[muscle] ?? muscle;
-          map[category] = (map[category] ?? 0) + (set.reps * set.load);
+          map[category] = (map[category] ?? 0) + set.totalVolume;
         }
       }
     }
