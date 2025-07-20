@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../providers/boxes.dart';
+import '../providers/muscle_coverage_provider.dart';
 import '../models/vo2.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../data/exercises.dart';
@@ -215,9 +216,9 @@ class HomeScreen extends ConsumerWidget {
   }
 
   Widget _buildMuscleRadarCard(BuildContext context, WidgetRef ref) {
-    final asyncSessions = ref.watch(workoutSessionsProvider);
+    final asyncMuscles = ref.watch(muscleCoverageProvider);
 
-    return asyncSessions.when(
+    return asyncMuscles.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Card(
         color: const Color(0xFF1C1D22),
@@ -226,42 +227,26 @@ class HomeScreen extends ConsumerWidget {
           child: Text('Error: $e'),
         ),
       ),
-      data: (sessions) {
-        if (sessions.isEmpty) {
+      data: (muscleVolume) {
+        if (muscleVolume.values.every((v) => v == 0)) {
           return Card(
             color: const Color(0xFF1C1D22),
             child: const Padding(
               padding: EdgeInsets.all(16),
-              child: Text('No workouts yet – log your first session!'),
+              child: Text('Log a workout to see muscle coverage'),
             ),
           );
         }
 
-        // Aggregate muscle volumes from the latest session
-        final latest = sessions.last;
-        final Map<String, double> muscleVolume = {
-          'Chest': 0,
-          'Back': 0,
-          'Legs': 0,
-          'Shoulders': 0,
-          'Arms': 0,
-          'Core': 0,
-        };
-
-        for (final set in latest.sets) {
-          final ex = kExerciseCatalog.firstWhere((e) => e.id == set.exerciseId, orElse: () => kExerciseCatalog.first);
-          for (final m in ex.primaryMuscles) {
-            muscleVolume[m] = (muscleVolume[m] ?? 0) + 1; // simple count per set
-          }
-        }
-
+        // normalise values to percentage of max for better visual spread
+        final maxVol = muscleVolume.values.reduce((a, b) => a > b ? a : b);
         final values = [
-          muscleVolume['Chest']!,
-          muscleVolume['Back']!,
-          muscleVolume['Legs']!,
-          muscleVolume['Shoulders']!,
-          muscleVolume['Arms']!,
-          muscleVolume['Core']!,
+          (muscleVolume['Chest'] ?? 0) / maxVol * 100,
+          (muscleVolume['Back'] ?? 0) / maxVol * 100,
+          (muscleVolume['Legs'] ?? 0) / maxVol * 100,
+          (muscleVolume['Shoulders'] ?? 0) / maxVol * 100,
+          (muscleVolume['Arms'] ?? 0) / maxVol * 100,
+          (muscleVolume['Core'] ?? 0) / maxVol * 100,
         ];
 
         return Card(
@@ -278,17 +263,18 @@ class HomeScreen extends ConsumerWidget {
                   height: 200,
                   child: RadarChart(
                     RadarChartData(
+                      gridBorderData: const BorderSide(color: Color(0xFF3A3B3F)),
                       dataSets: [
                         RadarDataSet(
                           dataEntries: values.map((v) => RadarEntry(value: v)).toList(),
-                          fillColor: Colors.blue.withOpacity(0.3),
-                          borderColor: Colors.blue,
+                          fillColor: const Color(0xFF6C63FF).withOpacity(0.4),
+                          borderColor: const Color(0xFF6C63FF),
                           borderWidth: 2,
                         ),
                       ],
-                      titleTextStyle: const TextStyle(fontSize: 12),
+                      titleTextStyle: const TextStyle(fontSize: 12, color: Colors.grey),
                       tickCount: 5,
-                      ticksTextStyle: const TextStyle(fontSize: 10),
+                      ticksTextStyle: const TextStyle(fontSize: 10, color: Colors.grey),
                       getTitle: (index, angle) {
                         const titles = ['Chest', 'Back', 'Legs', 'Shoulders', 'Arms', 'Core'];
                         return RadarChartTitle(text: titles[index], angle: angle);
