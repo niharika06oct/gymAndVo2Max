@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/Exercise.dart';
 import '../models/WorkoutSet.dart';
 import '../models/WorkoutSession.dart';
+import 'package:uuid/uuid.dart';
+import '../providers/boxes.dart';
 
 class WorkoutLoggerScreen extends ConsumerStatefulWidget {
   const WorkoutLoggerScreen({super.key});
@@ -14,7 +16,7 @@ class WorkoutLoggerScreen extends ConsumerStatefulWidget {
 class _WorkoutLoggerScreenState extends ConsumerState<WorkoutLoggerScreen> {
   final List<WorkoutSet> _sets = [];
   final List<Exercise> _availableExercises = [
-    const Exercise(
+    Exercise(
       id: 'bench_press',
       name: 'Bench Press',
       primaryMuscles: ['Chest', 'Triceps'],
@@ -22,7 +24,7 @@ class _WorkoutLoggerScreenState extends ConsumerState<WorkoutLoggerScreen> {
       category: 'Strength',
       defaultUnit: 'kg',
     ),
-    const Exercise(
+    Exercise(
       id: 'squat',
       name: 'Squat',
       primaryMuscles: ['Quadriceps', 'Glutes'],
@@ -30,7 +32,7 @@ class _WorkoutLoggerScreenState extends ConsumerState<WorkoutLoggerScreen> {
       category: 'Strength',
       defaultUnit: 'kg',
     ),
-    const Exercise(
+    Exercise(
       id: 'deadlift',
       name: 'Deadlift',
       primaryMuscles: ['Back', 'Hamstrings'],
@@ -38,7 +40,7 @@ class _WorkoutLoggerScreenState extends ConsumerState<WorkoutLoggerScreen> {
       category: 'Strength',
       defaultUnit: 'kg',
     ),
-    const Exercise(
+    Exercise(
       id: 'pull_up',
       name: 'Pull Up',
       primaryMuscles: ['Back', 'Biceps'],
@@ -46,7 +48,7 @@ class _WorkoutLoggerScreenState extends ConsumerState<WorkoutLoggerScreen> {
       category: 'Strength',
       defaultUnit: 'reps',
     ),
-    const Exercise(
+    Exercise(
       id: 'shoulder_press',
       name: 'Shoulder Press',
       primaryMuscles: ['Shoulders'],
@@ -54,7 +56,7 @@ class _WorkoutLoggerScreenState extends ConsumerState<WorkoutLoggerScreen> {
       category: 'Strength',
       defaultUnit: 'kg',
     ),
-    const Exercise(
+    Exercise(
       id: 'plank',
       name: 'Plank',
       primaryMuscles: ['Core'],
@@ -63,6 +65,21 @@ class _WorkoutLoggerScreenState extends ConsumerState<WorkoutLoggerScreen> {
       defaultUnit: 'sec',
     ),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Load last saved session's sets (optional) to persist across navigation within the run.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final box = await ref.read(workoutSessionBoxProvider.future);
+      if (box.isNotEmpty) {
+        final last = box.getAt(box.length - 1) as WorkoutSession;
+        setState(() {
+          _sets.addAll(last.sets);
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -296,11 +313,26 @@ class _WorkoutLoggerScreenState extends ConsumerState<WorkoutLoggerScreen> {
       return;
     }
 
-    // TODO: Save workout session to database
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Workout saved!')),
-    );
-    Navigator.pop(context);
+    () async {
+      final box = await ref.read(workoutSessionBoxProvider.future);
+
+      final session = WorkoutSession(
+        id: const Uuid().v4(),
+        start: DateTime.now(),
+        end: DateTime.now(),
+        sets: List<WorkoutSet>.from(_sets),
+        intervals: const [],
+      );
+
+      await box.add(session);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Workout saved!')),
+        );
+        Navigator.pop(context);
+      }
+    }();
   }
 }
 

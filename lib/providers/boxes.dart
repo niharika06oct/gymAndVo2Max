@@ -18,6 +18,7 @@ final exerciseBoxProvider = FutureProvider<Box<Exercise>>((ref) async {
 });
 
 final workoutSessionBoxProvider = FutureProvider<Box<WorkoutSession>>((ref) async {
+  Hive.registerAdapter(WorkoutSetAdapter());
   Hive.registerAdapter(WorkoutSessionAdapter());
   return await Hive.openBox<WorkoutSession>('workout_sessions');
 });

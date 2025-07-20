@@ -10,7 +10,7 @@ class Exercise extends HiveObject {
   @HiveField(4) final String? category;
   @HiveField(5) final String? defaultUnit;   // 'kg', 'lb', etc.
 
-  const Exercise({
+  Exercise({
     required this.id,
     required this.name,
     required this.primaryMuscles,

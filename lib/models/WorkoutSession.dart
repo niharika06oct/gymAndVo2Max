@@ -1,4 +1,6 @@
 import 'package:hive/hive.dart';
+import 'WorkoutSet.dart';
+import 'Interval.dart';
 part 'WorkoutSession.g.dart';
 
 @HiveType(typeId: 2)

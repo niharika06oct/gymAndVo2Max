@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../providers/boxes.dart';
 import '../models/vo2.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -10,12 +11,32 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('FitStrength VO₂'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: ShaderMask(
+          shaderCallback: (bounds) => const LinearGradient(
+            colors: [Color(0xFF6C63FF), Color(0xFF42A5F5)],
+          ).createShader(Rect.fromLTWH(0, 0, bounds.width, bounds.height)),
+          child: Text(
+            'FitStrength VO₂',
+            style: GoogleFonts.inter(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () => Navigator.pushNamed(context, '/settings'),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.fromLTRB(16, kToolbarHeight + 24, 16, 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -47,6 +68,7 @@ class HomeScreen extends ConsumerWidget {
 
   Widget _buildVo2PercentileCard(BuildContext context, WidgetRef ref) {
     return Card(
+      color: const Color(0xFF1C1D22),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -74,12 +96,17 @@ class HomeScreen extends ConsumerWidget {
                   Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
-                        '68%',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue,
+                      ShaderMask(
+                        shaderCallback: (bounds) => const LinearGradient(
+                          colors: [Color(0xFF6C63FF), Color(0xFF42A5F5)],
+                        ).createShader(Rect.fromLTWH(0, 0, bounds.width, bounds.height)),
+                        child: const Text(
+                          '68%',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                       const Text(
@@ -104,6 +131,7 @@ class HomeScreen extends ConsumerWidget {
 
   Widget _buildHiitScoreCard(BuildContext context) {
     return Card(
+      color: const Color(0xFF1C1D22),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -160,6 +188,7 @@ class HomeScreen extends ConsumerWidget {
 
   Widget _buildMuscleRadarCard(BuildContext context) {
     return Card(
+      color: const Color(0xFF1C1D22),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -177,12 +206,12 @@ class HomeScreen extends ConsumerWidget {
                   dataSets: [
                     RadarDataSet(
                       dataEntries: [
-                        const RadarEntry(value: 85, title: 'Chest'),
-                        const RadarEntry(value: 90, title: 'Back'),
-                        const RadarEntry(value: 75, title: 'Legs'),
-                        const RadarEntry(value: 60, title: 'Shoulders'),
-                        const RadarEntry(value: 80, title: 'Arms'),
-                        const RadarEntry(value: 70, title: 'Core'),
+                        const RadarEntry(value: 85),
+                        const RadarEntry(value: 90),
+                        const RadarEntry(value: 75),
+                        const RadarEntry(value: 60),
+                        const RadarEntry(value: 80),
+                        const RadarEntry(value: 70),
                       ],
                       fillColor: Colors.blue.withOpacity(0.3),
                       borderColor: Colors.blue,
@@ -197,7 +226,6 @@ class HomeScreen extends ConsumerWidget {
                     return RadarChartTitle(
                       text: titles[index],
                       angle: angle,
-                      style: const TextStyle(fontSize: 10),
                     );
                   },
                 ),
@@ -231,6 +259,7 @@ class HomeScreen extends ConsumerWidget {
 
   Widget _buildQuickActions(BuildContext context) {
     return Card(
+      color: const Color(0xFF1C1D22),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -290,7 +319,7 @@ class HomeScreen extends ConsumerWidget {
                     Icons.analytics,
                     Colors.purple,
                     () {
-                      // TODO: Navigate to insights
+                      Navigator.pushNamed(context, '/insights');
                     },
                   ),
                 ),
@@ -309,23 +338,35 @@ class HomeScreen extends ConsumerWidget {
     Color color,
     VoidCallback onPressed,
   ) {
-    return ElevatedButton(
-      onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: color,
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 12),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, size: 24),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: const TextStyle(fontSize: 12),
-            textAlign: TextAlign.center,
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(40),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [color, color.withOpacity(0.7)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-        ],
+          borderRadius: BorderRadius.circular(40),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 26, color: Colors.white),
+            const SizedBox(height: 4),
+            Text(
+              title,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
