@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../providers/boxes.dart';
 import '../providers/muscle_coverage_provider.dart';
+import '../providers/hiit_provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -157,60 +158,72 @@ class HomeScreen extends ConsumerWidget {
   }
 
   Widget _buildHiitScoreCard(BuildContext context) {
-    return Card(
-      color: const Color(0xFF1C1D22),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'HIIT Quality Score',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+    return Consumer(builder: (context, ref, _) {
+      final asyncProgress = ref.watch(hiitProgressProvider);
+      return asyncProgress.when(
+        loading: () => const SizedBox(height: 120, child: Center(child: CircularProgressIndicator())),
+        error: (e, _) => Text('Error: $e'),
+        data: (progress) {
+          final pct = (progress * 100).round();
+          final color = progress >= 1
+              ? Colors.green
+              : progress >= 0.5
+                  ? Colors.orange
+                  : Colors.red;
+          return Card(
+            color: const Color(0xFF1C1D22),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('HIIT Quality Score',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 16),
+                  Row(
                     children: [
-                      const Text('This Week'),
-                      const SizedBox(height: 8),
-                      LinearProgressIndicator(
-                        value: 0.75, // 75% of weekly target
-                        backgroundColor: Colors.grey[300],
-                        valueColor: const AlwaysStoppedAnimation<Color>(Colors.green),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('This Week'),
+                            const SizedBox(height: 8),
+                            LinearProgressIndicator(
+                              value: progress,
+                              backgroundColor: Colors.grey[800],
+                              valueColor: AlwaysStoppedAnimation<Color>(color),
+                            ),
+                            const SizedBox(height: 4),
+                            Text('$pct% of weekly target',
+                                style: const TextStyle(fontSize: 12)),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        '75% of weekly target',
-                        style: TextStyle(fontSize: 12),
+                      const SizedBox(width: 16),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: color.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          progress >= 1
+                              ? 'Excellent'
+                              : progress >= 0.5
+                                  ? 'Good'
+                                  : 'Low',
+                          style: TextStyle(color: color, fontWeight: FontWeight.bold),
+                        ),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(width: 16),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.green[100],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    'Good',
-                    style: TextStyle(
-                      color: Colors.green,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ],
-        ),
-      ),
-    );
+          );
+        },
+      );
+    });
   }
 
   Widget _buildMuscleRadarCard(BuildContext context, WidgetRef ref) {
@@ -338,7 +351,7 @@ class HomeScreen extends ConsumerWidget {
                     Icons.speed,
                     Colors.orange,
                     () {
-                      // TODO: Navigate to HIIT logger
+                      Navigator.pushNamed(context, '/hiit_logger');
                     },
                   ),
                 ),

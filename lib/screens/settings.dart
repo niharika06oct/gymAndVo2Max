@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../providers/theme_provider.dart';
+import '../providers/boxes.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -49,6 +50,40 @@ class SettingsScreen extends ConsumerWidget {
           ListTile(
             title: Text('App Version', style: GoogleFonts.inter()),
             trailing: Text('1.0.0', style: GoogleFonts.inter()),
+          ),
+          const Divider(),
+          ListTile(
+            title: const Text('Clear All Workout Data'),
+            subtitle: const Text('Reset HIIT and workout sessions (for debugging)'),
+            trailing: ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () => _clearData(context, ref),
+              child: const Text('Clear', style: TextStyle(color: Colors.white)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _clearData(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Clear All Data?'),
+        content: const Text('This will delete all workout sessions and HIIT data. This cannot be undone.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () {
+              final box = ref.read(workoutSessionBoxProvider);
+              box.clear();
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('All workout data cleared')),
+              );
+            },
+            child: const Text('Clear', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),

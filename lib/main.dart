@@ -7,6 +7,7 @@ import 'providers/theme_provider.dart';
 import 'screens/home.dart';
 import 'screens/vo2_test.dart';
 import 'screens/workout_logger.dart';
+import 'screens/hiit_logger.dart';
 import 'screens/insights.dart';
 import 'screens/settings.dart';
 import 'screens/onboarding.dart';
@@ -55,6 +56,7 @@ class MyApp extends ConsumerWidget {
         '/insights': (context) => const InsightsScreen(),
         '/settings': (context) => const SettingsScreen(),
         '/onboarding': (context) => const OnboardingScreen(),
+        '/hiit_logger': (context) => const HiitLoggerScreen(),
       },
     );
   }
