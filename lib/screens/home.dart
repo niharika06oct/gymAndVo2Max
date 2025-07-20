@@ -3,9 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../providers/boxes.dart';
 import '../providers/muscle_coverage_provider.dart';
-import '../models/vo2.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../data/exercises.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
