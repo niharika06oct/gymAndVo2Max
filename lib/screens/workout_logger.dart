@@ -16,7 +16,9 @@ class WorkoutLoggerScreen extends ConsumerStatefulWidget {
 }
 
 class _WorkoutLoggerScreenState extends ConsumerState<WorkoutLoggerScreen> {
-  final List<WorkoutSet> _sets = [];
+  // Map of exerciseId -> list of sets for that exercise so we can display
+  // all sets of the same exercise together on one card similar to apps like Hevy.
+  final Map<String, List<WorkoutSet>> _exerciseSets = {};
 
   @override
   Widget build(BuildContext context) {
@@ -32,58 +34,139 @@ class _WorkoutLoggerScreenState extends ConsumerState<WorkoutLoggerScreen> {
       ),
       body: Column(
         children: [
-          _buildExerciseDropdown(),
+          _buildAddExerciseSection(),
           Expanded(
-            child: ListView.builder(
-              itemCount: _sets.length,
-              itemBuilder: (context, index) {
-                return _buildSetCard(_sets[index]);
-              },
-            ),
+            child: _exerciseSets.isEmpty
+                ? _buildEmptyState()
+                : ListView(
+                    children: _exerciseSets.entries.map((entry) {
+                      final exerciseId = entry.key;
+                      final sets = entry.value;
+                      return _buildExerciseCard(exerciseId, sets);
+                    }).toList(),
+                  ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildExerciseDropdown() {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: DropdownButtonFormField<Exercise>(
-        hint: const Text('Select an exercise to begin...'),
-        items: kExerciseCatalog.map((exercise) {
-          return DropdownMenuItem(
-            value: exercise,
-            child: Text(exercise.name),
-          );
-        }).toList(),
-        onChanged: (exercise) {
-          if (exercise != null) {
-            _addSet(exercise);
-          }
-        },
+  Widget _buildAddExerciseSection() {
+    return Card(
+      margin: const EdgeInsets.all(8.0),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Add Exercise',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<Exercise>(
+                    hint: const Text('Select an exercise...'),
+                    items: kExerciseCatalog.map((exercise) {
+                      return DropdownMenuItem(
+                        value: exercise,
+                        child: Text(exercise.name),
+                      );
+                    }).toList(),
+                    onChanged: (exercise) {
+                      if (exercise != null) {
+                        _addExercise(exercise);
+                      }
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Exercise'),
+                  onPressed: () {
+                    // This will be handled by the dropdown onChanged
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildSetCard(WorkoutSet set) {
-    final exercise = kExerciseCatalog.firstWhere((e) => e.id == set.exerciseId);
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.fitness_center,
+            size: 64,
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No exercises added yet',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Select an exercise from above to start logging your workout',
+            style: Theme.of(context).textTheme.bodyMedium,
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExerciseCard(String exerciseId, List<WorkoutSet> sets) {
+    final exercise = kExerciseCatalog.firstWhere((e) => e.id == exerciseId);
+
     return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('${exercise.name} - Set ${set.setIndex}', style: Theme.of(context).textTheme.titleLarge),
-            ...List.generate(set.reps, (repIndex) {
-              return _buildRepRow(set, repIndex);
-            }),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    exercise.name, 
+                    style: Theme.of(context).textTheme.titleLarge
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline),
+                  onPressed: () => _removeExercise(exerciseId),
+                  tooltip: 'Remove exercise',
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            ...sets.map((set) => Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Set ${set.setIndex}', style: Theme.of(context).textTheme.titleMedium),
+                ...List.generate(set.loads.length, (repIndex) => _buildRepRow(set, repIndex)),
+                TextButton.icon(
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Rep'),
+                  onPressed: () => _addRep(set),
+                ),
+                const Divider(),
+              ],
+            )).toList(),
             TextButton.icon(
-              icon: const Icon(Icons.add),
-              label: const Text('Add Rep'),
-              onPressed: () {
-                _addRep(set);
-              },
+              icon: const Icon(Icons.add_box_outlined),
+              label: const Text('Add Set'),
+              onPressed: () => _addSet(exercise),
             ),
           ],
         ),
@@ -112,14 +195,31 @@ class _WorkoutLoggerScreenState extends ConsumerState<WorkoutLoggerScreen> {
     );
   }
 
+  void _addExercise(Exercise exercise) {
+    setState(() {
+      if (!_exerciseSets.containsKey(exercise.id)) {
+        _exerciseSets[exercise.id] = [];
+        // Add the first set automatically when adding a new exercise
+        _addSet(exercise);
+      }
+    });
+  }
+
+  void _removeExercise(String exerciseId) {
+    setState(() {
+      _exerciseSets.remove(exerciseId);
+    });
+  }
+
   void _addSet(Exercise exercise) {
     setState(() {
+      final setList = _exerciseSets.putIfAbsent(exercise.id, () => []);
       final newSet = WorkoutSet(
         exerciseId: exercise.id,
-        setIndex: _sets.where((s) => s.exerciseId == exercise.id).length + 1,
-        loads: [0], // Start with one rep
+        setIndex: setList.length + 1,
+        loads: [0], // start with one rep
       );
-      _sets.add(newSet);
+      setList.add(newSet);
     });
   }
 
@@ -137,9 +237,11 @@ class _WorkoutLoggerScreenState extends ConsumerState<WorkoutLoggerScreen> {
   }
 
   void _saveWorkout() {
-    if (_sets.isEmpty) {
+    final allSets = _exerciseSets.values.expand((e) => e).toList();
+
+    if (allSets.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Add at least one set to save workout')),
+        const SnackBar(content: Text('Add at least one exercise to save workout')),
       );
       return;
     }
@@ -148,7 +250,7 @@ class _WorkoutLoggerScreenState extends ConsumerState<WorkoutLoggerScreen> {
       id: const Uuid().v4(),
       start: DateTime.now(),
       end: DateTime.now(),
-      sets: _sets,
+      sets: allSets,
     );
 
     final box = ref.read(workoutSessionBoxProvider);

@@ -41,19 +41,29 @@ class HomeScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // VO₂ Percentile Ring
-            _buildVo2PercentileCard(context, ref),
+            // Top Row: VO₂ Max (Left) and HIIT Score (Right)
+            Row(
+              children: [
+                // VO₂ Max Card (Left)
+                Expanded(
+                  flex: 1,
+                  child: _buildVo2PercentileCard(context, ref),
+                ),
+                const SizedBox(width: 16),
+                // HIIT Score Card (Right)
+                Expanded(
+                  flex: 1,
+                  child: _buildHiitScoreCard(context),
+                ),
+              ],
+            ),
             const SizedBox(height: 16),
             
-            // HIIT Score Bar
-            _buildHiitScoreCard(context),
-            const SizedBox(height: 16),
-            
-            // Muscle Coverage Radar
+            // Middle Row: Muscle Coverage (Full Width)
             _buildMuscleRadarCard(context, ref),
             const SizedBox(height: 16),
             
-            // Quick Actions
+            // Bottom Row: Quick Actions (Full Width)
             _buildQuickActions(context),
           ],
         ),
@@ -111,15 +121,15 @@ class HomeScreen extends ConsumerWidget {
               children: [
                 const Text('VO₂ Max',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 SizedBox(
-                  height: 120,
+                  height: 100,
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
                       SizedBox(
-                        height: 120,
-                        width: 120,
+                        height: 100,
+                        width: 100,
                         child: CircularProgressIndicator(
                           value: pct,
                           strokeWidth: 8,
@@ -136,11 +146,11 @@ class HomeScreen extends ConsumerWidget {
                             ).createShader(Rect.fromLTWH(0, 0, bounds.width, bounds.height)),
                             child: Text('${(pct * 100).round()}%',
                                 style: const TextStyle(
-                                    fontSize: 24,
+                                    fontSize: 20,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white)),
                           ),
-                          Text(level, style: const TextStyle(fontSize: 12)),
+                          Text(level, style: const TextStyle(fontSize: 11)),
                         ],
                       ),
                     ],
@@ -148,7 +158,7 @@ class HomeScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 8),
                 Text('Latest VO₂: ${latest.toStringAsFixed(1)} ml·kg⁻¹·min⁻¹',
-                    style: const TextStyle(fontSize: 14)),
+                    style: const TextStyle(fontSize: 13)),
               ],
             ),
           ),
@@ -179,43 +189,37 @@ class HomeScreen extends ConsumerWidget {
                 children: [
                   const Text('HIIT Quality Score',
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 16),
-                  Row(
+                  const SizedBox(height: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('This Week'),
-                            const SizedBox(height: 8),
-                            LinearProgressIndicator(
-                              value: progress,
-                              backgroundColor: Colors.grey[800],
-                              valueColor: AlwaysStoppedAnimation<Color>(color),
-                            ),
-                            const SizedBox(height: 4),
-                            Text('$pct% of weekly target',
-                                style: const TextStyle(fontSize: 12)),
-                          ],
-                        ),
+                      const Text('This Week'),
+                      const SizedBox(height: 8),
+                      LinearProgressIndicator(
+                        value: progress,
+                        backgroundColor: Colors.grey[800],
+                        valueColor: AlwaysStoppedAnimation<Color>(color),
                       ),
-                      const SizedBox(width: 16),
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: color.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          progress >= 1
-                              ? 'Excellent'
-                              : progress >= 0.5
-                                  ? 'Good'
-                                  : 'Low',
-                          style: TextStyle(color: color, fontWeight: FontWeight.bold),
-                        ),
-                      ),
+                      const SizedBox(height: 4),
+                      Text('$pct% of weekly target',
+                          style: const TextStyle(fontSize: 12)),
                     ],
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: color.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      progress >= 1
+                          ? 'Excellent'
+                          : progress >= 0.5
+                              ? 'Good'
+                              : 'Low',
+                      style: TextStyle(color: color, fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ],
               ),
@@ -271,7 +275,7 @@ class HomeScreen extends ConsumerWidget {
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
                 SizedBox(
-                  height: 200,
+                  height: 250,
                   child: RadarChart(
                     RadarChartData(
                       gridBorderData: const BorderSide(color: Color(0xFF3A3B3F)),
