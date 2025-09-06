@@ -6,6 +6,7 @@ import '../models/Exercise.dart';
 import '../models/WorkoutSession.dart';
 import '../models/WorkoutSet.dart';
 import '../models/Interval.dart';
+import '../models/WorkoutTemplate.dart';
 
 // Boxes are opened in main.dart; providers simply expose them.
 
@@ -41,4 +42,14 @@ final workoutSessionsProvider = StreamProvider<List<WorkoutSession>>((ref) {
   final box = ref.watch(workoutSessionBoxProvider);
   return box.watch().map((_) => box.values.cast<WorkoutSession>().toList())
     .startWith(box.values.cast<WorkoutSession>().toList());
+});
+
+final workoutTemplateBoxProvider = Provider<Box<WorkoutTemplate>>((ref) {
+  return Hive.box<WorkoutTemplate>('workout_templates');
+});
+
+final workoutTemplatesProvider = StreamProvider<List<WorkoutTemplate>>((ref) {
+  final box = ref.watch(workoutTemplateBoxProvider);
+  return box.watch().map((_) => box.values.cast<WorkoutTemplate>().toList())
+    .startWith(box.values.cast<WorkoutTemplate>().toList());
 });

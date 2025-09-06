@@ -12,9 +12,8 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: const Color(0xFF1C1D22),
         elevation: 0,
         title: ShaderMask(
           shaderCallback: (bounds) => const LinearGradient(
@@ -23,7 +22,7 @@ class HomeScreen extends ConsumerWidget {
           child: Text(
             'FitStrength VO₂',
             style: GoogleFonts.inter(
-              fontSize: 28,
+              fontSize: 24,
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
@@ -37,7 +36,7 @@ class HomeScreen extends ConsumerWidget {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, kToolbarHeight + 24, 16, 16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -368,6 +367,22 @@ class HomeScreen extends ConsumerWidget {
                     Colors.purple,
                     () {
                       Navigator.pushNamed(context, '/insights');
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildActionButton(
+                    context,
+                    'Templates',
+                    Icons.list_alt,
+                    Colors.teal,
+                    () {
+                      Navigator.pushNamed(context, '/workout_templates');
                     },
                   ),
                 ),

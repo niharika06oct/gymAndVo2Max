@@ -6,16 +6,20 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'providers/theme_provider.dart';
 import 'screens/home.dart';
 import 'screens/vo2_test.dart';
+import 'screens/vo2_history.dart';
 import 'screens/workout_logger.dart';
 import 'screens/hiit_logger.dart';
 import 'screens/insights.dart';
 import 'screens/settings.dart';
 import 'screens/onboarding.dart';
+import 'screens/workout_templates.dart';
+import 'screens/template_editor.dart';
 import 'models/vo2.dart';
 import 'models/Exercise.dart';
 import 'models/WorkoutSet.dart';
 import 'models/WorkoutSession.dart';
 import 'models/Interval.dart';
+import 'models/WorkoutTemplate.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,11 +31,21 @@ void main() async {
     ..registerAdapter(ExerciseAdapter())
     ..registerAdapter(WorkoutSetAdapter())
     ..registerAdapter(WorkoutSessionAdapter())
-    ..registerAdapter(IntervalAdapter());
+    ..registerAdapter(IntervalAdapter())
+    ..registerAdapter(WorkoutTemplateAdapter())
+    ..registerAdapter(TemplateExerciseAdapter());
 
   // Open boxes synchronously so the app can read immediately
   await Hive.openBox<Vo2Record>('vo2');
   await Hive.openBox<WorkoutSession>('workout_sessions');
+  
+  // Delete existing workout_templates box if it exists (to handle schema changes)
+  try {
+    await Hive.deleteBoxFromDisk('workout_templates');
+  } catch (e) {
+    // Box doesn't exist, that's fine
+  }
+  await Hive.openBox<WorkoutTemplate>('workout_templates');
 
   runApp(const ProviderScope(child: MyApp()));
 }
@@ -52,11 +66,17 @@ class MyApp extends ConsumerWidget {
       routes: {
         '/home': (context) => const HomeScreen(),
         '/vo2_test': (context) => const Vo2TestScreen(),
+        '/vo2_history': (context) => const Vo2HistoryScreen(),
         '/workout_logger': (context) => const WorkoutLoggerScreen(),
         '/insights': (context) => const InsightsScreen(),
         '/settings': (context) => const SettingsScreen(),
         '/onboarding': (context) => const OnboardingScreen(),
         '/hiit_logger': (context) => const HiitLoggerScreen(),
+        '/workout_templates': (context) => const WorkoutTemplatesScreen(),
+        '/template_editor': (context) {
+          final template = ModalRoute.of(context)?.settings.arguments as WorkoutTemplate?;
+          return TemplateEditorScreen(template: template);
+        },
       },
     );
   }
